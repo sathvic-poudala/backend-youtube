@@ -336,14 +336,16 @@ const updateCoverImage = asyncHandler(async(req,res) => {
     const newCoverImage = req.file?.path
 
     if(!newCoverImage) {
-        throw ApiError(400, "new avatar is required")
+        throw ApiError(400, "new cover image is required")
     }
 
-    const newAvatarUrl = await uploadOnCloudinary(newCoverImage).url
+    const newCoverImageUrl = await uploadOnCloudinary(newCoverImage).url
 
     if(!newCoverImageUrl) {
         throw ApiError(500, "some problem while uploading in cloudinary")
     }
+
+    const oldCoverImageUrl = req.user.coverImage;
 
     const user = await User.findByIdAndUpdate(
         req.user._id,
@@ -356,6 +358,10 @@ const updateCoverImage = asyncHandler(async(req,res) => {
     ).select(
         "-password"
     )
+
+    if (oldCoverImageUrl) {
+        await deleteFromCloudinary(oldCoverImageUrl);
+    }
 
     return res
     .status(200)
