@@ -4,7 +4,7 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 import { deleteFromCloudinary, uploadOnCloudinary } from "../utils/cloudinary.js";
 import { ApiResponse } from "../utils/ApiResponse.js"
 import { verifyJWT } from "../middlewares/auth.middleware.js";
-import jws  from "jsonwebtoken";
+import jwt from "jsonwebtoken"
 
 const generateAccessAndRefreshToken = async(userId) => {
     const user = await User.findById(userId)
@@ -77,7 +77,7 @@ const registerUser = asyncHandler(async(req,res) => {
     })
 
     const createdUser = await User.findById(user._id).select(
-        "-password -refershToken"
+        "-password -refreshToken"
     )
     if(!createdUser) {
         throw new ApiError(500,"smth went wrong while regestering user")
@@ -121,7 +121,7 @@ const loginUser = asyncHandler(async(req,res) => {
 
     const {refreshToken,accessToken} = await generateAccessAndRefreshToken(user._id)
 
-    user.refershToken = refreshToken;
+    user.refreshToken = refreshToken;
 
    const loggedInUser = user.toObject();
 
@@ -152,14 +152,14 @@ const loginUser = asyncHandler(async(req,res) => {
 })
 
 const logoutUser = asyncHandler(async(req,res) => {
-    /** destroy cookies and remove refersh token from user in mongodb database */
+    /** destroy cookies and remove refresh token from user in mongodb database */
     const userId = req.user?._id
 
     User.findByIdAndUpdate(
         userId,
         {
             $unset: {
-                refershToken: 1
+                refreshToken: 1
             }
         },
         {
@@ -185,7 +185,7 @@ const refreshAccessToken = asyncHandler(async(req,res) => {
     //validate it
     //generate new access and refresh tokens
     //store refresh token in db and send new tokens to user
-    const token = req.cookie?.refershToken || req.body.refershToken
+    const token = req.cookies?.refreshToken || req.body.refreshToken
 
     if(!token) {
         throw new ApiError(401,"user not authorized")
@@ -199,11 +199,11 @@ const refreshAccessToken = asyncHandler(async(req,res) => {
         throw new ApiError(401,"invalid refreshToken")
     }
 
-    if(token !== user.refershToken) {
-        throw new ApiError(401,"refershToken expired")
+    if(token !== user.refreshToken) {
+        throw new ApiError(401,"refreshToken expired")
     }
 
-    const {refershToken,accessToken} =  await generateAccessAndRefreshToken(user)
+    const {refreshToken,accessToken} =  await generateAccessAndRefreshToken(user)
 
     options = {
         httpOnly: true,
@@ -213,13 +213,13 @@ const refreshAccessToken = asyncHandler(async(req,res) => {
     return res
     .status(200)
     .cookie("accessToken",accessToken,options)  
-    .cookie("refershToken",refreshToken,options)
+    .cookie("refreshToken",refreshToken,options)
     .json(
-        new ApiError(201,
+        new ApiResponse(201,
             "tokens generated successfully",
             {
                 accessToken,
-                refershToken
+                refreshToken
             }
         )
     )

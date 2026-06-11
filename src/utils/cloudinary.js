@@ -1,7 +1,6 @@
 import { v2 as cloudinary } from 'cloudinary';
 import { log } from 'console';
 import fs from 'fs';
-import { asyncHandler } from './asyncHandler';
 import "../config/cloudinary.js"
 
 
