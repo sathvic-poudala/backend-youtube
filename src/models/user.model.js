@@ -41,7 +41,7 @@ const userSchema = new Schema({
         type: String,
         required: true,
     },
-    refershToken: {
+    refreshToken: {
         type: String,
     }
 

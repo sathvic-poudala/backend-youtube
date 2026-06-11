@@ -13,7 +13,7 @@ const generateAccessAndRefreshToken = async(userId) => {
 
     user.refreshToken = refreshToken
 
-    await user.save({validationBeforeSave: false})
+    await user.save({validateBeforeSave : false})
 
     return {
         accessToken,
@@ -199,11 +199,13 @@ const refreshAccessToken = asyncHandler(async(req,res) => {
         throw new ApiError(401,"invalid refreshToken")
     }
 
+    console.log("incoming token:", token)
+    console.log("token in db:", user.refreshToken)
     if(token !== user.refreshToken) {
         throw new ApiError(401,"refreshToken expired")
     }
 
-    const {refreshToken,accessToken} =  await generateAccessAndRefreshToken(user)
+    const {refreshToken,accessToken} =  await generateAccessAndRefreshToken(user._id)
 
     options = {
         httpOnly: true,
